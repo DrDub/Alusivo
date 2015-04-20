@@ -14,6 +14,13 @@ import org.openrdf.model.URI;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 
+/**
+ * 
+ * Interface for Referring Expression algorithms. 
+ * 
+ * @author Pablo Duboue <pablo.duboue@gmail.com>
+ *
+ */
 public interface ReferringExpressionAlgorithm {
 
     public Result resolve(URI referent, List<URI> confusors,
