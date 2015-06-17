@@ -81,6 +81,12 @@ public class Main {
 	    if (options.verbose)
 		((ch.qos.logback.classic.Logger) DaleReiterAlgorithm.logger)
 			.setLevel(Level.DEBUG);
+	} else if (options.algorithm.equals(GardentAlgorithm.class.getName())) {
+	    algorithm = new GardentAlgorithm(TypePriorities.dbPediaPriorities,
+		    TypePriorities.dbPediaIgnored);
+	    if (options.verbose)
+		((ch.qos.logback.classic.Logger) DaleReiterAlgorithm.logger)
+			.setLevel(Level.DEBUG);
 	} else {
 	    System.err.println("Unknown algorithm '" + options.algorithm + "'");
 	    System.exit(-1);
