@@ -33,10 +33,11 @@ import com.beust.jcommander.Parameter;
 
 /**
  * 
- * Simple driver, it reads RDF as N-Triples and outputs the selected statements to standard output.
+ * Simple driver, it reads RDF as N-Triples and outputs the selected statements
+ * to standard output.
  * 
  * @author Pablo Duboue <pablo.duboue@gmail.com>
- *
+ * 
  */
 public class Main {
 
@@ -75,8 +76,8 @@ public class Main {
 	ReferringExpressionAlgorithm algorithm = null;
 	if (options.algorithm.equals(DaleReiterAlgorithm.class.getName())) {
 	    algorithm = new DaleReiterAlgorithm(
-		    DaleReiterAlgorithm.dbPediaPriorities,
-		    DaleReiterAlgorithm.dbPediaIgnored);
+		    TypePriorities.dbPediaPriorities,
+		    TypePriorities.dbPediaIgnored);
 	    if (options.verbose)
 		((ch.qos.logback.classic.Logger) DaleReiterAlgorithm.logger)
 			.setLevel(Level.DEBUG);
