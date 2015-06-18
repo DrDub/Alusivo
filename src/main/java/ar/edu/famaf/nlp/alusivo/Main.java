@@ -85,7 +85,13 @@ public class Main {
 	    algorithm = new GardentAlgorithm(TypePriorities.dbPediaPriorities,
 		    TypePriorities.dbPediaIgnored);
 	    if (options.verbose)
-		((ch.qos.logback.classic.Logger) DaleReiterAlgorithm.logger)
+		((ch.qos.logback.classic.Logger) GardentAlgorithm.logger)
+			.setLevel(Level.DEBUG);
+	} else if (options.algorithm.equals(GraphAlgorithm.class.getName())) {
+	    algorithm = new GraphAlgorithm(TypePriorities.dbPediaPriorities,
+		    TypePriorities.dbPediaIgnored);
+	    if (options.verbose)
+		((ch.qos.logback.classic.Logger) GraphAlgorithm.logger)
 			.setLevel(Level.DEBUG);
 	} else {
 	    System.err.println("Unknown algorithm '" + options.algorithm + "'");
