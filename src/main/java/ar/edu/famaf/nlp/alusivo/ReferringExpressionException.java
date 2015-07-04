@@ -7,10 +7,10 @@ package ar.edu.famaf.nlp.alusivo;
 
 /**
  * 
- * Custom exception. 
+ * Custom exception.
  * 
  * @author Pablo Duboue <pablo.duboue@gmail.com>
- *
+ * 
  */
 public class ReferringExpressionException extends Exception {
 
@@ -23,20 +23,20 @@ public class ReferringExpressionException extends Exception {
     }
 
     public ReferringExpressionException(String message) {
-	super(message);
+        super(message);
     }
 
     public ReferringExpressionException(Throwable cause) {
-	super(cause);
+        super(cause);
     }
 
     public ReferringExpressionException(String message, Throwable cause) {
-	super(message, cause);
+        super(message, cause);
     }
 
-    public ReferringExpressionException(String message, Throwable cause,
-	    boolean enableSuppression, boolean writableStackTrace) {
-	super(message, cause, enableSuppression, writableStackTrace);
+    public ReferringExpressionException(String message, Throwable cause, boolean enableSuppression,
+            boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 
 }

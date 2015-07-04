@@ -53,153 +53,130 @@ import org.slf4j.LoggerFactory;
 
 public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
 
-    static final Logger logger = LoggerFactory
-	    .getLogger(DaleReiterAlgorithm.class);
+    static final Logger logger = LoggerFactory.getLogger(DaleReiterAlgorithm.class);
 
     private Map<String, List<String>> priorities;
     private Map<String, List<String>> ignored;
 
-    public DaleReiterAlgorithm(Map<String, List<String>> priorities,
-	    Map<String, List<String>> ignored) {
-	this.priorities = new HashMap<String, List<String>>();
-	for (Map.Entry<String, List<String>> e : priorities.entrySet()) {
-	    this.priorities
-		    .put(e.getKey(), new ArrayList<String>(e.getValue()));
-	}
-	this.ignored = new HashMap<String, List<String>>();
-	if (ignored != null)
-	    for (Map.Entry<String, List<String>> e : ignored.entrySet()) {
-		this.ignored.put(e.getKey(),
-			new ArrayList<String>(e.getValue()));
-	    }
+    public DaleReiterAlgorithm(Map<String, List<String>> priorities, Map<String, List<String>> ignored) {
+        this.priorities = new HashMap<String, List<String>>();
+        for (Map.Entry<String, List<String>> e : priorities.entrySet()) {
+            this.priorities.put(e.getKey(), new ArrayList<String>(e.getValue()));
+        }
+        this.ignored = new HashMap<String, List<String>>();
+        if (ignored != null)
+            for (Map.Entry<String, List<String>> e : ignored.entrySet()) {
+                this.ignored.put(e.getKey(), new ArrayList<String>(e.getValue()));
+            }
     }
 
-    public Result resolve(URI referent, List<URI> confusors,
-	    RepositoryConnection repo) throws ReferringExpressionException,
-	    RepositoryException {
-	RepositoryResult<Statement> types = repo.getStatements(referent,
-		RDF.TYPE, null, true);
-	if (!types.hasNext())
-	    throw new ReferringExpressionException(
-		    "Unknwon type for referent '" + referent + "'");
-	List<String> priorities = null;
-	Set<String> ignored = new HashSet<String>();
-	StringBuilder typeNames = new StringBuilder();
-	String type = null;
-	while (types.hasNext()) {
-	    Statement typeStmt = types.next();
-	    type = typeStmt.getObject().stringValue();
-	    typeNames.append(' ').append(type);
-	    priorities = this.priorities.get(type);
-	    if (priorities != null) {
-		if (this.ignored.containsKey(type))
-		    ignored.addAll(this.ignored.get(type));
-		break;
-	    }
-	}
+    public Result resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
+            throws ReferringExpressionException, RepositoryException {
+        RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
+        if (!types.hasNext())
+            throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
+        List<String> priorities = null;
+        Set<String> ignored = new HashSet<String>();
+        StringBuilder typeNames = new StringBuilder();
+        String type = null;
+        while (types.hasNext()) {
+            Statement typeStmt = types.next();
+            type = typeStmt.getObject().stringValue();
+            typeNames.append(' ').append(type);
+            priorities = this.priorities.get(type);
+            if (priorities != null) {
+                if (this.ignored.containsKey(type))
+                    ignored.addAll(this.ignored.get(type));
+                break;
+            }
+        }
 
-	if (priorities == null)
-	    throw new ReferringExpressionException(
-		    "No priorities for referent with types [" + typeNames
-			    + " ]");
-	logger.debug("Using priorities " + priorities + " (type '" + type
-		+ "') for referent '" + referent);
+        if (priorities == null)
+            throw new ReferringExpressionException("No priorities for referent with types [" + typeNames + " ]");
+        logger.debug("Using priorities " + priorities + " (type '" + type + "') for referent '" + referent);
 
-	List<Statement> worldStmts = new ArrayList<Statement>();
-	Iterations.addAll(repo.getStatements(referent, null, null, true),
-		worldStmts);
-	Iterations.addAll(repo.getStatements(null, null, referent, true),
-		worldStmts);
-	List<Statement> referentStmts = new ArrayList<Statement>(worldStmts);
-	for (URI confusor : confusors) {
-	    boolean empty = true;
-	    RepositoryResult<Statement> confusorStmts1 = repo.getStatements(
-		    confusor, null, null, true);
-	    if (confusorStmts1.hasNext())
-		empty = false;
-	    Iterations.addAll(confusorStmts1, worldStmts);
-	    RepositoryResult<Statement> confusorStmts2 = repo.getStatements(
-		    null, null, confusor, true);
-	    if (confusorStmts2.hasNext())
-		empty = false;
-	    Iterations.addAll(confusorStmts2, worldStmts);
-	    if (empty)
-		throw new ReferringExpressionException(
-			"No information available for confusor " + confusor);
+        List<Statement> worldStmts = new ArrayList<Statement>();
+        Iterations.addAll(repo.getStatements(referent, null, null, true), worldStmts);
+        Iterations.addAll(repo.getStatements(null, null, referent, true), worldStmts);
+        List<Statement> referentStmts = new ArrayList<Statement>(worldStmts);
+        for (URI confusor : confusors) {
+            boolean empty = true;
+            RepositoryResult<Statement> confusorStmts1 = repo.getStatements(confusor, null, null, true);
+            if (confusorStmts1.hasNext())
+                empty = false;
+            Iterations.addAll(confusorStmts1, worldStmts);
+            RepositoryResult<Statement> confusorStmts2 = repo.getStatements(null, null, confusor, true);
+            if (confusorStmts2.hasNext())
+                empty = false;
+            Iterations.addAll(confusorStmts2, worldStmts);
+            if (empty)
+                throw new ReferringExpressionException("No information available for confusor " + confusor);
 
-	}
+        }
 
-	// check we know about all predicates for this type
-	Set<String> unknownPredicates = new HashSet<String>();
-	for (Statement stmt : worldStmts)
-	    unknownPredicates.add(stmt.getPredicate().getLocalName());
-	unknownPredicates.removeAll(priorities);
-	unknownPredicates.removeAll(ignored);
-	if (!unknownPredicates.isEmpty())
-	    logger.warn("For type '" + type + "' missing properties: "
-		    + unknownPredicates + ", referent " + referent);
+        // check we know about all predicates for this type
+        Set<String> unknownPredicates = new HashSet<String>();
+        for (Statement stmt : worldStmts)
+            unknownPredicates.add(stmt.getPredicate().getLocalName());
+        unknownPredicates.removeAll(priorities);
+        unknownPredicates.removeAll(ignored);
+        if (!unknownPredicates.isEmpty())
+            logger.warn("For type '" + type + "' missing properties: " + unknownPredicates + ", referent " + referent);
 
-	List<Statement> result = new ArrayList<Statement>();
+        List<Statement> result = new ArrayList<Statement>();
 
-	List<URI> remainingConfusors = new ArrayList<URI>(confusors);
-	for (String predicate : priorities) {
-	    for (Statement stmt : referentStmts)
-		if (!result.contains(stmt)
-			&& stmt.getPredicate().getLocalName().equals(predicate)) {
-		    List<URI> removed = rulesOut(remainingConfusors, stmt,
-			    worldStmts);
-		    result.add(stmt);
-		    remainingConfusors.removeAll(removed);
-		    if (remainingConfusors.isEmpty())
-			break;
-		}
-	    if (remainingConfusors.isEmpty())
-		break;
-	}
+        List<URI> remainingConfusors = new ArrayList<URI>(confusors);
+        for (String predicate : priorities) {
+            for (Statement stmt : referentStmts)
+                if (!result.contains(stmt) && stmt.getPredicate().getLocalName().equals(predicate)) {
+                    List<URI> removed = rulesOut(remainingConfusors, stmt, worldStmts);
+                    result.add(stmt);
+                    remainingConfusors.removeAll(removed);
+                    if (remainingConfusors.isEmpty())
+                        break;
+                }
+            if (remainingConfusors.isEmpty())
+                break;
+        }
 
-	if (!remainingConfusors.isEmpty()) {
-	    throw new ReferringExpressionException("Confusors left: "
-		    + remainingConfusors);
-	}
+        if (!remainingConfusors.isEmpty()) {
+            throw new ReferringExpressionException("Confusors left: " + remainingConfusors);
+        }
 
-	return new Result(result);
+        return new Result(result);
     }
 
     /**
      * Check which confusors will get ruled out by adding a given statement.
      */
-    public static List<URI> rulesOut(List<URI> confusors, Statement stmtToAdd,
-	    List<Statement> worldStmts) {
-	logger.debug("Checking statement " + stmtToAdd + " to rule out "
-		+ confusors);
-	List<URI> result = new ArrayList<URI>();
-	for (URI confusor : confusors) {
-	    if (result.contains(confusor))
-		// in case repeated of confusors
-		continue;
+    public static List<URI> rulesOut(List<URI> confusors, Statement stmtToAdd, List<Statement> worldStmts) {
+        logger.debug("Checking statement " + stmtToAdd + " to rule out " + confusors);
+        List<URI> result = new ArrayList<URI>();
+        for (URI confusor : confusors) {
+            if (result.contains(confusor))
+                // in case repeated of confusors
+                continue;
 
-	    // see how the new statement will look for the confusor
-	    Statement newStmt = new StatementImpl(confusor,
-		    stmtToAdd.getPredicate(), stmtToAdd.getObject());
-	    if (worldStmts.contains(newStmt)) {
-		// it holds, this confusor is not ruled out
-		logger.debug("Already present" + newStmt);
-		continue;
-	    }
-	    // check if there's another statement about this confusor
-	    // invalidated
-	    for (Statement stmt : worldStmts) {
-		if (!stmt.getSubject().equals(confusor))
-		    continue;
-		if (!stmt.getPredicate().equals(stmtToAdd.getPredicate()))
-		    continue;
+            // see how the new statement will look for the confusor
+            Statement newStmt = new StatementImpl(confusor, stmtToAdd.getPredicate(), stmtToAdd.getObject());
+            if (worldStmts.contains(newStmt)) {
+                // it holds, this confusor is not ruled out
+                logger.debug("Already present" + newStmt);
+                continue;
+            }
+            // check if there's another statement about this confusor
+            // invalidated
+            for (Statement stmt : worldStmts) {
+                if (!stmt.getSubject().equals(confusor))
+                    continue;
+                if (!stmt.getPredicate().equals(stmtToAdd.getPredicate()))
+                    continue;
 
-		result.add(confusor);
-		logger.debug("Statement '" + stmtToAdd
-			+ "' rules out confusor " + confusor);
-	    }
-	}
-	return result;
+                result.add(confusor);
+                logger.debug("Statement '" + stmtToAdd + "' rules out confusor " + confusor);
+            }
+        }
+        return result;
     }
 
     // dbPedia priorities, from Pacheco et al. (2012)
