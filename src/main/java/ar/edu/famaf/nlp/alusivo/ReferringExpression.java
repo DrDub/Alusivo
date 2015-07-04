@@ -14,6 +14,8 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 
 /**
  * 
@@ -95,8 +97,19 @@ public class ReferringExpression implements Serializable {
         }
 
         public String toString() {
-            return subject.toString() + "\t" + (negative ? "NOT" : "") + "\t" + predicate.toString() + "\t"
-                    + object.toString();
+            return (subject == null ? "?" : subject.toString()) + "\t" + (negative ? "NOT" : "") + "\t"
+                    + predicate.toString() + "\t" + (object == null ? "?" : object.toString());
+        }
+
+        public boolean holds(URI candidate, RepositoryConnection repo) throws RepositoryException {
+            URI subject = this.subject == null ? candidate : this.subject;
+            URI predicate = this.predicate;
+            Value object = this.object == null ? candidate : this.object;
+
+            boolean empty = !repo.getStatements(subject, predicate, object, true).hasNext();
+            if (this.negative)
+                return empty;
+            return !empty;
         }
     }
 
