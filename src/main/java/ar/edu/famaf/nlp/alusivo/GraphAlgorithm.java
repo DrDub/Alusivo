@@ -118,7 +118,7 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         }
     }
 
-    public Result resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
+    public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
 
         URI[] uris = new URI[confusors.size() + 1];
@@ -136,12 +136,12 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             throw new ReferringExpressionException("No graph found");
 
         // read out properties from final graph
-        List<Statement> statements = new ArrayList<Statement>();
+        ReferringExpression result = new ReferringExpression(referent);
         for (Edge e : finalGraph.edgeSet())
-            statements.add(repo.getStatements(finalGraph.getEdgeSource(e), e.getURI(),
-                    e.isRelation() ? finalGraph.getEdgeTarget(e) : e.getValue(), true).next());
+            result.addPositive(finalGraph.getEdgeSource(e), e.getURI(), e.isRelation() ? finalGraph.getEdgeTarget(e)
+                    : e.getValue());
 
-        return new Result(statements);
+        return result;
     }
 
     private DirectedPseudograph<Resource, Edge> buildGraph(RepositoryConnection repo, URI[] uris)

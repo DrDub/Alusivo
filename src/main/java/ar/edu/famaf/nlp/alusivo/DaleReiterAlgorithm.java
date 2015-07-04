@@ -70,7 +70,7 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
             }
     }
 
-    public Result resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
+    public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
         RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
         if (!types.hasNext())
@@ -123,14 +123,16 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
         if (!unknownPredicates.isEmpty())
             logger.warn("For type '" + type + "' missing properties: " + unknownPredicates + ", referent " + referent);
 
-        List<Statement> result = new ArrayList<Statement>();
+        ReferringExpression result = new ReferringExpression(referent);
+        Set<Statement> added = new HashSet<Statement>();
 
         List<URI> remainingConfusors = new ArrayList<URI>(confusors);
         for (String predicate : priorities) {
             for (Statement stmt : referentStmts)
-                if (!result.contains(stmt) && stmt.getPredicate().getLocalName().equals(predicate)) {
+                if (!added.contains(stmt) && stmt.getPredicate().getLocalName().equals(predicate)) {
                     List<URI> removed = rulesOut(remainingConfusors, stmt, worldStmts);
-                    result.add(stmt);
+                    added.add(stmt);
+                    result.addPositive(stmt);
                     remainingConfusors.removeAll(removed);
                     if (remainingConfusors.isEmpty())
                         break;
@@ -143,7 +145,7 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
             throw new ReferringExpressionException("Confusors left: " + remainingConfusors);
         }
 
-        return new Result(result);
+        return result;
     }
 
     /**

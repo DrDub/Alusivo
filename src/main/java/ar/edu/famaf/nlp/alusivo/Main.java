@@ -25,7 +25,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.UnsupportedRDFormatException;
 import org.openrdf.sail.memory.MemoryStore;
 
-import ar.edu.famaf.nlp.alusivo.ReferringExpressionAlgorithm.Result;
+import ar.edu.famaf.nlp.alusivo.ReferringExpression.Predicate;
 import ch.qos.logback.classic.Level;
 
 import com.beust.jcommander.JCommander;
@@ -107,12 +107,9 @@ public class Main {
             if (options.type != null)
                 conn.add(referent, RDF.TYPE, f.createURI(options.type));
 
-            Result r = algorithm.resolve(referent, confusors, conn);
-            Rio.write(r.getPositives(), System.out, RDFFormat.NTRIPLES);
-            if (r.hasNegatives()) {
-                System.out.println("\n\nNEGATIVES\n\n");
-                Rio.write(r.getNegatives(), System.out, RDFFormat.NTRIPLES);
-            }
+            ReferringExpression r = algorithm.resolve(referent, confusors, conn);
+            for (Predicate pred : r.predicates())
+                System.out.println(pred);
         } finally {
             conn.close();
         }

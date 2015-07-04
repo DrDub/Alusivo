@@ -24,8 +24,6 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
-import ar.edu.famaf.nlp.alusivo.ReferringExpressionAlgorithm.Result;
-
 /**
  * 
  * Simple test case for Dale & Reiter Algorithm.
@@ -70,12 +68,12 @@ public class DaleReiterAlgorithmTest extends TestCase {
             priorities.put(balltype.toString(), Arrays.asList(new String[] { "type", "color", "distance" }));
 
             DaleReiterAlgorithm algorithm = new DaleReiterAlgorithm(priorities, null);
-            Result r = algorithm.resolve(referent, confusors, conn);
+            ReferringExpression r = algorithm.resolve(referent, confusors, conn);
             assertFalse(r.hasNegatives());
-            assertEquals(3, r.getPositives().size());
-            assertEquals(RDF.TYPE, r.getPositives().get(0).getPredicate());
-            assertEquals(color, r.getPositives().get(1).getPredicate());
-            assertEquals(distance, r.getPositives().get(2).getPredicate());
+            assertEquals(3, r.predicates().size());
+            assertEquals(RDF.TYPE, r.predicates().get(0).getPredicate());
+            assertEquals(color, r.predicates().get(1).getPredicate());
+            assertEquals(distance, r.predicates().get(2).getPredicate());
         } finally {
             conn.close();
         }

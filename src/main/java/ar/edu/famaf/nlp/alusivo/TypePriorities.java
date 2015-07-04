@@ -125,7 +125,7 @@ public class TypePriorities {
             "typeOfElectrification", "usingCountry", "viceChancellor", "voice", "writer", "youthWing" };
     public static String[] dbPediaPersonIgnored = { "birthDate", "birthName" };
 
-    public static String dbPediaPersonPriorities[] = { "orderInOffice", "nationality", "country", "profession",
+    public static String dbPediaPersonPriorities[] = { "type", "orderInOffice", "nationality", "country", "profession",
             "deadPlace", "birthPlace", "leaderName-1", "keyPerson-1", "author-1", "commander-1", "occupation",
             "knownFor", "instrument", "successor", "monarch", "successor-1", "primeMinister-1", "activeYearsEndDate",
             "party", "deathDate", "deathPlace", "child", "almaMater", "activeYearsStartDate", "religion", "spouse",

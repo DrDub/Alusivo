@@ -123,7 +123,7 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
             }
     }
 
-    public Result resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
+    public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
         RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
         if (!types.hasNext())
@@ -312,24 +312,22 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
             logger.debug(cardSolver.getMeasures().toString());
             if (solved) {
                 logger.debug("P+: ");
-                List<Statement> plus = new ArrayList<Statement>();
+                ReferringExpression result = new ReferringExpression(referent);
 
                 for (int i : setVar(cardSolver, pPlus).getValues()) {
                     logger.debug("\t" + numberedPairs.get(i));
                     Pair p = numberedPairs.get(i);
-                    plus.add(repo.getStatements(referent, p.getPredicate(), p.getValue(), true).next());
+                    result.addPositive(null, p.getPredicate(), p.getValue());
                 }
                 logger.debug("P-: ");
-                List<Statement> minus = new ArrayList<Statement>();
                 for (int i : setVar(cardSolver, pMinus).getValues()) {
                     logger.debug("\t" + numberedPairs.get(i));
 
                     Pair p = numberedPairs.get(i);
-                    repo.add(referent, p.getPredicate(), p.getValue());
-                    minus.add(repo.getStatements(referent, p.getPredicate(), p.getValue(), true).next());
+                    result.addNegative(null, p.getPredicate(), p.getValue());
                 }
 
-                return new Result(plus, minus);
+                return result;
             }
             targetCard++;
         }
