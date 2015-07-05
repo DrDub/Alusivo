@@ -59,6 +59,7 @@ public class DaleReiterAlgorithmTest extends TestCase {
             conn.add(new StatementImpl(confusor1, RDF.TYPE, balltype));
             conn.add(new StatementImpl(confusor2, RDF.TYPE, balltype));
             conn.add(new StatementImpl(referent, color, f.createLiteral("red")));
+            conn.add(new StatementImpl(confusor1, color, f.createLiteral("black")));
             conn.add(new StatementImpl(confusor2, color, f.createLiteral("red")));
             conn.add(new StatementImpl(referent, distance, f.createLiteral("middle")));
             conn.add(new StatementImpl(confusor1, distance, f.createLiteral("far")));
@@ -69,11 +70,11 @@ public class DaleReiterAlgorithmTest extends TestCase {
 
             DaleReiterAlgorithm algorithm = new DaleReiterAlgorithm(priorities, null);
             ReferringExpression r = algorithm.resolve(referent, confusors, conn);
+            //  System.out.println(r);
             assertFalse(r.hasNegatives());
-            assertEquals(3, r.predicates().size());
-            assertEquals(RDF.TYPE, r.predicates().get(0).getPredicate());
-            assertEquals(color, r.predicates().get(1).getPredicate());
-            assertEquals(distance, r.predicates().get(2).getPredicate());
+            assertEquals(2, r.predicates().size());
+            assertEquals(color, r.predicates().get(0).getPredicate());
+            assertEquals(distance, r.predicates().get(1).getPredicate());
         } finally {
             conn.close();
         }

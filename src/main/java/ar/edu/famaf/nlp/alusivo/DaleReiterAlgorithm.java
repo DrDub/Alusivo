@@ -131,11 +131,13 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
             for (Statement stmt : referentStmts)
                 if (!added.contains(stmt) && stmt.getPredicate().getLocalName().equals(predicate)) {
                     List<URI> removed = rulesOut(remainingConfusors, stmt, worldStmts);
-                    added.add(stmt);
-                    result.addPositive(stmt);
-                    remainingConfusors.removeAll(removed);
-                    if (remainingConfusors.isEmpty())
-                        break;
+                    if (!removed.isEmpty()) {
+                        added.add(stmt);
+                        result.addPositive(stmt);
+                        remainingConfusors.removeAll(removed);
+                        if (remainingConfusors.isEmpty())
+                            break;
+                    }
                 }
             if (remainingConfusors.isEmpty())
                 break;
