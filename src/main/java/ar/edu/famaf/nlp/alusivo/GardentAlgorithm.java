@@ -97,13 +97,11 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
         }
 
         public URI getPredicate() {
-            // TODO Auto-generated method stub
-            return null;
+            return predicate;
         }
 
         public Value getValue() {
-            // TODO Auto-generated method stub
-            return null;
+            return value;
         }
 
     }
