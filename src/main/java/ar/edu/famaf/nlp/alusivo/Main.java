@@ -25,7 +25,6 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.UnsupportedRDFormatException;
 import org.openrdf.sail.memory.MemoryStore;
 
-import ar.edu.famaf.nlp.alusivo.ReferringExpression.Predicate;
 import ch.qos.logback.classic.Level;
 
 import com.beust.jcommander.JCommander;
@@ -108,8 +107,7 @@ public class Main {
                 conn.add(referent, RDF.TYPE, f.createURI(options.type));
 
             ReferringExpression r = algorithm.resolve(referent, confusors, conn);
-            for (Predicate pred : r.predicates())
-                System.out.println(pred);
+            System.out.println(r);
         } finally {
             conn.close();
         }

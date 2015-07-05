@@ -74,6 +74,7 @@ public class ReferringExpression implements Serializable {
 
         protected Predicate(Resource subject, URI predicate, Value object, boolean negative) {
             assert referent != null;
+            assert predicate != null;
             this.subject = subject == null || subject.equals(referent) ? null : (URI) subject;
             this.predicate = predicate;
             this.object = object == null || object.equals(referent) ? null : object;
@@ -140,5 +141,13 @@ public class ReferringExpression implements Serializable {
             if (pred.isNegative())
                 return true;
         return false;
+    }
+
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for (Predicate pred : predicates)
+            result.append(pred.toString()).append('\n');
+        return result.toString();
+
     }
 }
