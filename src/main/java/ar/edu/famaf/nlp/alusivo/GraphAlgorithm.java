@@ -49,11 +49,17 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
 
     static final Logger logger = LoggerFactory.getLogger(GraphAlgorithm.class);
 
+    private static long MAX_TIME = 60 * 1000L; // 1 min
+
     private Map<String, List<String>> priorities;
     private Map<String, List<String>> ignored;
     private long maxTime = 60 * 1000L; // 1 min
 
     public GraphAlgorithm(Map<String, List<String>> priorities, Map<String, List<String>> ignored) {
+        this(priorities, ignored, MAX_TIME);
+    }
+
+    public GraphAlgorithm(Map<String, List<String>> priorities, Map<String, List<String>> ignored, long maxTime) {
         this.priorities = new HashMap<String, List<String>>();
         for (Map.Entry<String, List<String>> e : priorities.entrySet()) {
             this.priorities.put(e.getKey(), new ArrayList<String>(e.getValue()));
@@ -63,6 +69,7 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             for (Map.Entry<String, List<String>> e : ignored.entrySet()) {
                 this.ignored.put(e.getKey(), new ArrayList<String>(e.getValue()));
             }
+        this.maxTime = maxTime;
     }
 
     protected static class Edge {
