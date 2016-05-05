@@ -73,22 +73,26 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
     public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
         RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
-        if (!types.hasNext())
-            throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
         List<String> priorities = null;
         Set<String> ignored = new HashSet<String>();
         StringBuilder typeNames = new StringBuilder();
         String type = null;
-        while (types.hasNext()) {
-            Statement typeStmt = types.next();
-            type = typeStmt.getObject().stringValue();
-            typeNames.append(' ').append(type);
-            priorities = this.priorities.get(type);
-            if (priorities != null) {
-                if (this.ignored.containsKey(type))
-                    ignored.addAll(this.ignored.get(type));
-                break;
+        try {
+            if (!types.hasNext())
+                throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
+            while (types.hasNext()) {
+                Statement typeStmt = types.next();
+                type = typeStmt.getObject().stringValue();
+                typeNames.append(' ').append(type);
+                priorities = this.priorities.get(type);
+                if (priorities != null) {
+                    if (this.ignored.containsKey(type))
+                        ignored.addAll(this.ignored.get(type));
+                    break;
+                }
             }
+        } finally {
+            types.close();
         }
 
         if (priorities == null)
@@ -102,13 +106,21 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
         for (URI confusor : confusors) {
             boolean empty = true;
             RepositoryResult<Statement> confusorStmts1 = repo.getStatements(confusor, null, null, true);
-            if (confusorStmts1.hasNext())
-                empty = false;
-            Iterations.addAll(confusorStmts1, worldStmts);
+            try {
+                if (confusorStmts1.hasNext())
+                    empty = false;
+                Iterations.addAll(confusorStmts1, worldStmts);
+            } finally {
+                confusorStmts1.close();
+            }
             RepositoryResult<Statement> confusorStmts2 = repo.getStatements(null, null, confusor, true);
-            if (confusorStmts2.hasNext())
-                empty = false;
-            Iterations.addAll(confusorStmts2, worldStmts);
+            try {
+                if (confusorStmts2.hasNext())
+                    empty = false;
+                Iterations.addAll(confusorStmts2, worldStmts);
+            } finally {
+                confusorStmts2.close();
+            }
             if (empty)
                 throw new ReferringExpressionException("No information available for confusor " + confusor);
 
