@@ -126,20 +126,20 @@ public class TypePriorities {
     public static String[] dbPediaPersonIgnored = { "birthDate", "birthName" };
 
     public static String dbPediaPersonPriorities[] = { "type", "orderInOffice", "nationality", "country", "profession",
-            "deadPlace", "birthPlace", "leaderName-1", "keyPerson-1", "author-1", "commander-1", "occupation",
-            "knownFor", "instrument", "successor", "monarch", "successor-1", "primeMinister-1", "activeYearsEndDate",
-            "party", "deathDate", "deathPlace", "child", "almaMater", "activeYearsStartDate", "religion", "spouse",
+            "birthPlace", "leaderName-1", "keyPerson-1", "author-1", "commander-1", "occupation", "knownFor",
+            "instrument", "successor", "monarch", "successor-1", "primeMinister-1", "activeYearsEndDate", "party",
+            "deathDate", "deathPlace", "child", "almaMater", "activeYearsStartDate", "religion", "spouse",
             "president-1", "notableCommander-1", "vicePresident", "president", "primeMinister", "award",
             "militaryRank", "child-1", "militaryCommand", "serviceStartYear", "office", "battle", "spouse-1",
-            "knownFor-1", "predecessor", "foundationPerson-1", "monarch-1", "predecessor-1",
-            "activeYearsStartYear", "activeYearsEndYear", "starring-1", "lieutenant", "parent", "governor-1",
-            "homepage", "residence", "appointer-1", "subject-1", "parent-1", "occupation-1", "region", "stateOfOrigin",
-            "employer", "genre", "hometown", "associatedMusicalArtist", "associatedBand", "governor", "deputy",
-            "vicePresident-1", "lieutenant-1", "governorGeneral", "governorGeneral-1", "influenced-1", "influencedBy",
-            "team", "managerClub", "influenced", "grammyAward", "statisticLabel", "formerTeam", "otherParty",
-            "associate-1", "associate", "recordLabel", "militaryBranch", "militaryUnit", "deputy-1", "beatifiedBy-1",
-            "associatedBand-1", "associatedMusicalArtist-1", "relation", "college", "draftTeam",
-            "chancellor-1", "incumbent-1" };
+            "knownFor-1", "predecessor", "foundationPerson-1", "monarch-1", "predecessor-1", "activeYearsStartYear",
+            "activeYearsEndYear", "starring-1", "lieutenant", "parent", "governor-1", "homepage", "residence",
+            "appointer-1", "subject-1", "parent-1", "occupation-1", "region", "stateOfOrigin", "employer", "genre",
+            "hometown", "associatedMusicalArtist", "associatedBand", "governor", "deputy", "vicePresident-1",
+            "lieutenant-1", "governorGeneral", "governorGeneral-1", "influenced-1", "influencedBy", "team",
+            "managerClub", "influenced", "grammyAward", "statisticLabel", "formerTeam", "otherParty", "associate-1",
+            "associate", "recordLabel", "militaryBranch", "militaryUnit", "deputy-1", "beatifiedBy-1",
+            "associatedBand-1", "associatedMusicalArtist-1", "relation", "college", "draftTeam", "chancellor-1",
+            "incumbent-1" };
     public static Map<String, List<String>> dbPediaPriorities = new HashMap<String, List<String>>();
 
     static {

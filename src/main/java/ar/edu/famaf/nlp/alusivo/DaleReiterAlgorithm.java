@@ -194,7 +194,4 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
         }
         return result;
     }
-
-    // dbPedia priorities, from Pacheco et al. (2012)
-
 }
