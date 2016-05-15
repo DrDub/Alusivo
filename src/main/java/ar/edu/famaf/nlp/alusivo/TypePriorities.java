@@ -35,7 +35,7 @@ public class TypePriorities {
             "location-1", "nationality-1", "country-1", "ethnicGroup" };
 
     public static String[] dbPediaOrganizationIgnored = new String[] { "nick", "wgs84_pos#lat", "wgs84_pos#long" };
-    public static String dbPediaOrganizationPriorities[] = { "22-rdf-syntax-ns#type", "country", "ethnicGroup", "country-1", "nationality-1",
+    public static String dbPediaOrganizationPriorities[] = { "type", "country", "ethnicGroup", "country-1", "nationality-1",
             "location-1", "birthPlace-1", "leaderName", "location", "capital", "notableCommander",
             "activeYearsStartYear", "battle", "identificationSymbol", "color", "activeYearsEndYear", "role",
             "narrator", "producer", "runtime", "director", "ethnicity-1", "affiliation-1", "knownFor-1", "battle-1",
@@ -50,7 +50,7 @@ public class TypePriorities {
             "distributingCompany-1", "recordedIn-1", "language-1", "channel-1", "militaryUnitSize", "genre-1",
             "firstAscentPerson-1", "distributor-1", "origin-1", "movement-1", "designer-1", "area-1", "formationYear",
             "percentageOfAreaWater", "garrison", "areaMetro", "deathCause-1", "countryWithFirstAstronaut-1", "team-1",
-            "assembly-1", "formationDate", "majorShrine-1", "billed-1", "type", "countryOrigin-1", "headquarters-1",
+            "assembly-1", "formationDate", "majorShrine-1", "billed-1", "countryOrigin-1", "headquarters-1",
             "anthem", "party-1", "mouthCountry-1", "recordLabel-1", "twinCountry-1", "distributingLabel-1",
             "restingPlace-1", "binomialAuthority-1", "company-1", "subject-1", "deathPlace-1", "officialLanguage",
             "computingPlatform-1", "governmentType", "computingMedia-1", "network-1", "countryWithFirstSpaceflight-1",
@@ -124,7 +124,7 @@ public class TypePriorities {
             "twinCountry", "typeOfElectrification", "usingCountry", "viceChancellor", "voice", "writer", "youthWing" };
 
     public static String[] dbPediaPersonIgnored = { "birthDate", "birthName" };
-    public static String dbPediaPersonPriorities[] = { "22-rdf-syntax-ns#type", "type", "orderInOffice", "nationality",
+    public static String dbPediaPersonPriorities[] = { "type", "orderInOffice", "nationality",
             "country", "profession", "birthPlace", "leaderName-1", "keyPerson-1", "author-1", "commander-1",
             "occupation", "knownFor", "instrument", "successor", "monarch", "successor-1", "primeMinister-1",
             "activeYearsEndDate", "party", "deathDate", "deathPlace", "child", "almaMater", "activeYearsStartDate",

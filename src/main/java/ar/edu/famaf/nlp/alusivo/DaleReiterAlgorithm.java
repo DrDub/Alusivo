@@ -123,7 +123,6 @@ public class DaleReiterAlgorithm implements ReferringExpressionAlgorithm {
             }
             if (empty)
                 throw new ReferringExpressionException("No information available for confusor " + confusor);
-
         }
 
         // check we know about all predicates for this type
