@@ -18,7 +18,6 @@ import junit.framework.TestSuite;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.StatementImpl;
-import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.sail.SailRepository;
@@ -128,7 +127,6 @@ public class GraphAlgorithmTest extends TestCase {
 
             GraphAlgorithm algorithm = new GraphAlgorithm(priorities, null);
             ReferringExpression r = algorithm.resolve(referent, confusors, conn);
-            System.out.println(r);
             assertFalse(r.hasNegatives());
             assertEquals(1, r.predicates().size());
             assertEquals(in, r.predicates().get(0).getPredicate());

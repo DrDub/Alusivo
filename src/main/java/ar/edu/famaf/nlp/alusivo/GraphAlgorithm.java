@@ -116,13 +116,19 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             if (!(obj instanceof Edge))
                 return false;
             Edge other = (Edge) obj;
-            if (!(this.isRelation ^ other.isRelation))
+            if (this.isRelation != other.isRelation)
                 return false;
             if (!this.uri.equals(other.uri))
                 return false;
             if (this.isRelation)
                 return true;
             return this.value.equals(other.value);
+        }
+
+        @Override
+        public String toString() {
+            return "Edge(" + (isRelation ? "R:" + uri.getLocalName() :
+                              uri.getLocalName() + " " + value) + ")";
         }
     }
 
@@ -252,14 +258,17 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         Set<Resource> result = new HashSet<Resource>();
         for (Edge e : graph.outgoingEdgesOf(node))
             result.add(graph.getEdgeTarget(e));
+        for (Edge e : graph.incomingEdgesOf(node))
+            result.add(graph.getEdgeSource(e));
         return result;
     }
 
     private boolean containedPropertiesInSubgraph(Resource node1, DirectedPseudograph<Resource, Edge> subGraph,
             Resource node2, DirectedPseudograph<Resource, Edge> fullGraph) {
         Set<Edge> basicProperties = subGraph.getAllEdges(node1, node1);
-        if (!fullGraph.getAllEdges(node2, node2).containsAll(basicProperties))
+        if (!fullGraph.getAllEdges(node2, node2).containsAll(basicProperties)) {
             return false;
+        }
         return true;
     }
 
@@ -279,25 +288,27 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
     }
 
     private boolean matchHelper(Map<Resource, Resource> bijection, // pi
-            Set<Resource> neighborgs, // Y
+            Set<Resource> neighbors, // Y
             DirectedPseudograph<Resource, Edge> fullGraph, // G
             DirectedPseudograph<Resource, Edge> candidate, // H
             long startTime) throws ReferringExpressionException {
 
-        if (bijection.keySet().size() == candidate.vertexSet().size())
+        if (bijection.keySet().size() == candidate.vertexSet().size()) {
             return true;
-        if (neighborgs.isEmpty())
+        }
+        if (neighbors.isEmpty()){
             return false;
+        }
 
         if (System.currentTimeMillis() - startTime > maxTime)
             throw new ReferringExpressionException("Time-out");
 
-        for (Resource toMap : neighborgs) { // y
+        for (Resource toMap : neighbors) { // y
             if (bijection.containsKey(toMap))
                 continue;
             // find valid matches Z
             for (Resource extension : fullGraph.vertexSet()) { // z
-                if (bijection.values().contains(extension))
+                if (bijection.values().contains(extension) || bijection.keySet().contains(extension))
                     continue;
                 if (!containedPropertiesInSubgraph(toMap, candidate, extension, fullGraph))
                     continue;
@@ -322,10 +333,10 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
                     continue;
                 Map<Resource, Resource> bijectionRec = new HashMap<>();
                 bijectionRec.putAll(bijection);
-                bijection.put(toMap, extension);
-                Set<Resource> neighborgsRec = new HashSet<Resource>(neighborgs);
-                neighborgsRec.remove(toMap); // not in Figure 8
-                if (matchHelper(bijectionRec, neighborgsRec, fullGraph, candidate, startTime))
+                bijectionRec.put(toMap, extension);
+                Set<Resource> neighborsRec = new HashSet<Resource>(neighbors);
+                neighborsRec.remove(toMap); // not in Figure 8
+                if (matchHelper(bijectionRec, neighborsRec, fullGraph, candidate, startTime))
                     return true;
             }
 
