@@ -119,13 +119,16 @@ public class GraphAlgorithmTest extends TestCase {
             conn.add(new StatementImpl(d[3], nextTo, d[2]));
             conn.add(new StatementImpl(d[3], rightOf, d[2]));
 
+            // types not encoded with RDF.TYPE
+            /*
             Map<String, List<String>> priorities = new HashMap<String, List<String>>();
             String[] prio = new String[] { "dog","small","large","brown","white","left_of",
                     "right_of","next_to","contains","in"};
             priorities.put(dog.toString(), Arrays.asList(prio));
             priorities.put(doghouse.toString(), Arrays.asList(prio));
+            */
 
-            GraphAlgorithm algorithm = new GraphAlgorithm(priorities, null);
+            GraphAlgorithm algorithm = new GraphAlgorithm(null, null);
             ReferringExpression r = algorithm.resolve(referent, confusors, conn);
             assertFalse(r.hasNegatives());
             assertEquals(1, r.predicates().size());
