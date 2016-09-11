@@ -11,6 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.jgrapht.graph.DirectedPseudograph;
@@ -61,15 +64,21 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
     }
 
     public GraphAlgorithm(Map<String, List<String>> priorities, Map<String, List<String>> ignored, long maxTime) {
-        this.priorities = new HashMap<String, List<String>>();
-        for (Map.Entry<String, List<String>> e : priorities.entrySet()) {
-            this.priorities.put(e.getKey(), new ArrayList<String>(e.getValue()));
+        this.priorities = null;
+        this.ignored = null;
+
+        if(priorities != null) {
+            this.priorities = new HashMap<String, List<String>>();
+            for (Map.Entry<String, List<String>> e : priorities.entrySet()) {
+                this.priorities.put(e.getKey(), new ArrayList<String>(e.getValue()));
+            }
         }
-        this.ignored = new HashMap<String, List<String>>();
-        if (ignored != null)
+        if (ignored != null){
+            this.ignored = new HashMap<String, List<String>>();
             for (Map.Entry<String, List<String>> e : ignored.entrySet()) {
                 this.ignored.put(e.getKey(), new ArrayList<String>(e.getValue()));
             }
+        }
         this.maxTime = maxTime;
     }
 
@@ -117,7 +126,7 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             if (!(obj instanceof Edge))
                 return false;
             Edge other = (Edge) obj;
-            if (!(this.isRelation ^ other.isRelation))
+            if (this.isRelation != other.isRelation)
                 return false;
             if (!this.uri.equals(other.uri))
                 return false;
@@ -125,24 +134,49 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
                 return true;
             return this.value.equals(other.value);
         }
+
+        @Override
+        public String toString() {
+            return "Edge(" + (isRelation ? "R:" + uri.getLocalName() :
+                              uri.getLocalName() + " " + value) + ")";
+        }
     }
 
     public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
 
-        RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
-        if (!types.hasNext())
-            throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
+        Map<String, Integer> mappedOrder = new HashMap<String, Integer>();
         Set<String> ignored = new HashSet<String>();
-        while (types.hasNext()) {
-            Statement typeStmt = types.next();
-            String type = typeStmt.getObject().stringValue();
-	    if (this.ignored.containsKey(type)){
-		ignored.addAll(this.ignored.get(type));
-                break;
+        if(this.priorities != null){
+            List<String> priorities = null;
+            RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
+
+            if (!types.hasNext())
+                throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
+        
+            
+            StringBuilder typeNames = new StringBuilder();
+            String type = null;
+            while (types.hasNext()) {
+                Statement typeStmt = types.next();
+                type = typeStmt.getObject().stringValue();
+                typeNames.append(' ').append(type);
+                priorities = this.priorities.get(type);
+                if (priorities != null) {
+                    if (this.ignored != null && this.ignored.containsKey(type))
+                        ignored.addAll(this.ignored.get(type));
+                    break;
+                }
             }
-	}
-    
+
+            if (priorities == null)
+                throw new ReferringExpressionException("No priorities for referent with types [" + typeNames + " ]");
+
+            mappedOrder = new HashMap<String, Integer>();
+            for (int i = 0; i < priorities.size(); i++)
+                mappedOrder.put(priorities.get(i), i);
+        }
+
         URI[] uris = new URI[confusors.size() + 1];
         confusors.toArray(uris);
         uris[uris.length - 1] = referent;
@@ -151,8 +185,9 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         DirectedPseudograph<Resource, Edge> candidate = new DirectedPseudograph<Resource, Edge>(Edge.class);
         candidate.addVertex(referent);
 
-        DirectedPseudograph<Resource, Edge> finalGraph = findGraph(referent, graph, bestGraph, Double.NaN, candidate,
-                System.currentTimeMillis()).getLeft();
+        DirectedPseudograph<Resource, Edge> finalGraph =
+            findGraph(referent, graph, bestGraph, Double.NaN, candidate,
+                      System.currentTimeMillis(), mappedOrder).getLeft();
 
         if (finalGraph == null)
             throw new ReferringExpressionException("No graph found");
@@ -187,8 +222,8 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             Statement stmt = stmts.next();
             if (consumed.contains(stmt))
                 continue;
-	    if(ignored.contains(stmt.getPredicate().getLocalName()))
-		continue;
+            if(ignored.contains(stmt.getPredicate().getLocalName()))
+                continue;
             consumed.add(stmt);
             Resource source = stmt.getSubject();
             if (!graph.containsVertex(source))
@@ -208,9 +243,11 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         }
     }
 
-    private Pair<DirectedPseudograph<Resource, Edge>, Double> findGraph(URI referent,
-            DirectedPseudograph<Resource, Edge> fullGraph, DirectedPseudograph<Resource, Edge> bestGraph,
-            double bestGraphCost, DirectedPseudograph<Resource, Edge> candidate, long startTime)
+    private Pair<DirectedPseudograph<Resource, Edge>, Double>
+        findGraph(URI referent,
+                  DirectedPseudograph<Resource, Edge> fullGraph, DirectedPseudograph<Resource, Edge> bestGraph,
+                  double bestGraphCost, DirectedPseudograph<Resource, Edge> candidate, long startTime,
+                  final Map<String, Integer>mappedOrder)
             throws ReferringExpressionException {
         double candidateCost = cost(candidate);
         if (bestGraph != null && bestGraphCost <= candidateCost)
@@ -227,7 +264,26 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         if (distractors.isEmpty())
             return Pair.of(candidate, candidateCost);
 
-        for (Edge e : neighbors(candidate, fullGraph)) {
+        Collection<Edge>neighbors = neighbors(candidate, fullGraph);
+        if(mappedOrder != null){
+            List<Edge>toSort = new ArrayList<Edge>(neighbors);
+
+            Collections.sort(toSort, new Comparator<Edge>() {
+                    public int compare(Edge e1, Edge e2) {
+                        Integer m1 = mappedOrder.get(e1.getURI().getLocalName());
+                        Integer m2 = mappedOrder.get(e2.getURI().getLocalName());
+                        if (m1 != null && m2 != null)
+                            return m1.compareTo(m2);
+                        if (m1 != null)
+                            return -1;
+                        if (m2 != null)
+                            return 1;
+                        return e1.getURI().toString().compareTo(e2.getURI().toString());
+                    }
+                });
+            neighbors = toSort;
+        }
+        for (Edge e : neighbors) {
             if (System.currentTimeMillis() - startTime > maxTime)
                 throw new ReferringExpressionException("Time-out");
 
@@ -241,8 +297,9 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             if (!newCandidate.vertexSet().contains(target))
                 newCandidate.addVertex(target);
             newCandidate.addEdge(fullGraph.getEdgeSource(e), fullGraph.getEdgeTarget(e), e);
-            Pair<DirectedPseudograph<Resource, Edge>, Double> p = findGraph(referent, fullGraph, bestGraph,
-                    bestGraphCost, newCandidate, startTime);
+            Pair<DirectedPseudograph<Resource, Edge>, Double> p =
+                findGraph(referent, fullGraph, bestGraph,
+                          bestGraphCost, newCandidate, startTime, mappedOrder);
             if (bestGraph == null || p.getRight() <= bestGraphCost) {
                 bestGraph = p.getLeft();
                 bestGraphCost = p.getRight();
@@ -268,14 +325,17 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         Set<Resource> result = new HashSet<Resource>();
         for (Edge e : graph.outgoingEdgesOf(node))
             result.add(graph.getEdgeTarget(e));
+        for (Edge e : graph.incomingEdgesOf(node))
+            result.add(graph.getEdgeSource(e));
         return result;
     }
 
     private boolean containedPropertiesInSubgraph(Resource node1, DirectedPseudograph<Resource, Edge> subGraph,
             Resource node2, DirectedPseudograph<Resource, Edge> fullGraph) {
         Set<Edge> basicProperties = subGraph.getAllEdges(node1, node1);
-        if (!fullGraph.getAllEdges(node2, node2).containsAll(basicProperties))
+        if (!fullGraph.getAllEdges(node2, node2).containsAll(basicProperties)) {
             return false;
+        }
         return true;
     }
 
@@ -300,10 +360,12 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
             DirectedPseudograph<Resource, Edge> candidate, // H
             long startTime) throws ReferringExpressionException {
 
-        if (bijection.keySet().size() == candidate.vertexSet().size())
+        if (bijection.keySet().size() == candidate.vertexSet().size()) {
             return true;
-        if (neighbors.isEmpty())
+        }
+        if (neighbors.isEmpty()){
             return false;
+        }
 
         if (System.currentTimeMillis() - startTime > maxTime)
             throw new ReferringExpressionException("Time-out");
@@ -313,7 +375,7 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
                 continue;
             // find valid matches Z
             for (Resource extension : fullGraph.vertexSet()) { // z
-                if (bijection.values().contains(extension))
+                if (bijection.values().contains(extension) || bijection.keySet().contains(extension))
                     continue;
                 if (!containedPropertiesInSubgraph(toMap, candidate, extension, fullGraph))
                     continue;
@@ -338,7 +400,7 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
                     continue;
                 Map<Resource, Resource> bijectionRec = new HashMap<>();
                 bijectionRec.putAll(bijection);
-                bijection.put(toMap, extension);
+                bijectionRec.put(toMap, extension);
                 Set<Resource> neighborsRec = new HashSet<Resource>(neighbors);
                 neighborsRec.remove(toMap); // not in Figure 8
                 if (matchHelper(bijectionRec, neighborsRec, fullGraph, candidate, startTime))
