@@ -3,7 +3,12 @@ package ar.edu.famaf.nlp.alusivo;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
+
+import org.openrdf.model.Statement;
+
 
 /**
  * dbPedia priorities, from Pacheco et al. (2012)
@@ -149,6 +154,16 @@ public class TypePriorities {
         dbPediaPriorities.put("http://dbpedia.org/ontology/Country", Arrays.asList(dbPediaCountryPriorities));
         dbPediaPriorities.put("http://dbpedia.org/ontology/Organisation", Arrays.asList(dbPediaOrganizationPriorities));
         dbPediaIgnored.put("http://dbpedia.org/ontology/Organisation", Arrays.asList(dbPediaOrganizationIgnored));
+    }
+
+    public static void cleanIgnored(List<Statement>stmts, Set<String>ignored) {
+	List<Integer>toDelete = new ArrayList<Integer>(stmts.size());
+	for(int i = 0; i < stmts.size(); i++) {
+	    if(ignored.contains(stmts.get(i).getPredicate().getLocalName()))
+		toDelete.add(i);
+	}
+	for(int i=toDelete.size() - 1; i >= 0; i--)
+	    stmts.remove(toDelete.get(i));
     }
 
     private TypePriorities() {

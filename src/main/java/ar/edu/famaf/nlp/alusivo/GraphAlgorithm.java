@@ -18,6 +18,7 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.RepositoryResult;
@@ -129,10 +130,23 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
     public ReferringExpression resolve(URI referent, List<URI> confusors, RepositoryConnection repo)
             throws ReferringExpressionException, RepositoryException {
 
+        RepositoryResult<Statement> types = repo.getStatements(referent, RDF.TYPE, null, true);
+        if (!types.hasNext())
+            throw new ReferringExpressionException("Unknwon type for referent '" + referent + "'");
+        Set<String> ignored = new HashSet<String>();
+        while (types.hasNext()) {
+            Statement typeStmt = types.next();
+            String type = typeStmt.getObject().stringValue();
+	    if (this.ignored.containsKey(type)){
+		ignored.addAll(this.ignored.get(type));
+                break;
+            }
+	}
+    
         URI[] uris = new URI[confusors.size() + 1];
         confusors.toArray(uris);
         uris[uris.length - 1] = referent;
-        DirectedPseudograph<Resource, Edge> graph = buildGraph(repo, uris);
+        DirectedPseudograph<Resource, Edge> graph = buildGraph(repo, uris, ignored);
         DirectedPseudograph<Resource, Edge> bestGraph = null;
         DirectedPseudograph<Resource, Edge> candidate = new DirectedPseudograph<Resource, Edge>(Edge.class);
         candidate.addVertex(referent);
@@ -152,27 +166,29 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
         return result;
     }
 
-    private DirectedPseudograph<Resource, Edge> buildGraph(RepositoryConnection repo, URI[] uris)
+    private DirectedPseudograph<Resource, Edge> buildGraph(RepositoryConnection repo, URI[] uris, Set<String>ignored)
             throws RepositoryException {
         DirectedPseudograph<Resource, Edge> result = new DirectedPseudograph<Resource, Edge>(Edge.class);
 
         Set<Statement> consumed = new HashSet<Statement>();
 
         for (URI uri : uris) {
-            buildGraphAddAll(result, repo.getStatements(uri, null, null, true), consumed);
-            buildGraphAddAll(result, repo.getStatements(null, null, uri, true), consumed);
+            buildGraphAddAll(result, repo.getStatements(uri, null, null, true), consumed, ignored);
+            buildGraphAddAll(result, repo.getStatements(null, null, uri, true), consumed, ignored);
         }
 
         return result;
     }
 
     private void buildGraphAddAll(DirectedPseudograph<Resource, Edge> graph, RepositoryResult<Statement> stmts,
-            Set<Statement> consumed) throws RepositoryException {
+            Set<Statement> consumed, Set<String>ignored) throws RepositoryException {
 
         while (stmts.hasNext()) {
             Statement stmt = stmts.next();
             if (consumed.contains(stmt))
                 continue;
+	    if(ignored.contains(stmt.getPredicate().getLocalName()))
+		continue;
             consumed.add(stmt);
             Resource source = stmt.getSubject();
             if (!graph.containsVertex(source))
@@ -279,20 +295,20 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
     }
 
     private boolean matchHelper(Map<Resource, Resource> bijection, // pi
-            Set<Resource> neighborgs, // Y
+            Set<Resource> neighbors, // Y
             DirectedPseudograph<Resource, Edge> fullGraph, // G
             DirectedPseudograph<Resource, Edge> candidate, // H
             long startTime) throws ReferringExpressionException {
 
         if (bijection.keySet().size() == candidate.vertexSet().size())
             return true;
-        if (neighborgs.isEmpty())
+        if (neighbors.isEmpty())
             return false;
 
         if (System.currentTimeMillis() - startTime > maxTime)
             throw new ReferringExpressionException("Time-out");
 
-        for (Resource toMap : neighborgs) { // y
+        for (Resource toMap : neighbors) { // y
             if (bijection.containsKey(toMap))
                 continue;
             // find valid matches Z
@@ -323,9 +339,9 @@ public class GraphAlgorithm implements ReferringExpressionAlgorithm {
                 Map<Resource, Resource> bijectionRec = new HashMap<>();
                 bijectionRec.putAll(bijection);
                 bijection.put(toMap, extension);
-                Set<Resource> neighborgsRec = new HashSet<Resource>(neighborgs);
-                neighborgsRec.remove(toMap); // not in Figure 8
-                if (matchHelper(bijectionRec, neighborgsRec, fullGraph, candidate, startTime))
+                Set<Resource> neighborsRec = new HashSet<Resource>(neighbors);
+                neighborsRec.remove(toMap); // not in Figure 8
+                if (matchHelper(bijectionRec, neighborsRec, fullGraph, candidate, startTime))
                     return true;
             }
 

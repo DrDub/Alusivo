@@ -149,6 +149,7 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
         List<Statement> referentStmts = new ArrayList<Statement>();
         Iterations.addAll(repo.getStatements(referent, null, null, true), referentStmts);
         Iterations.addAll(repo.getStatements(null, null, referent, true), referentStmts);
+	TypePriorities.cleanIgnored(referentStmts, ignored);
 
         final Map<String, Integer> mappedOrder = new HashMap<String, Integer>();
         for (int i = 0; i < priorities.size(); i++)
@@ -179,6 +180,7 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
             Iterations.addAll(confusorStmts2, confusorsTrue[i]);
             if (empty)
                 throw new ReferringExpressionException("No information available for confusor " + confusor);
+	    TypePriorities.cleanIgnored(confusorsTrue[i], ignored);
         }
 
         // check we know about all predicates for this type
@@ -231,7 +233,6 @@ public class GardentAlgorithm implements ReferringExpressionAlgorithm {
         Map<Pair, Integer> pairToInt = new HashMap<Pair, Integer>();
         for (int i = 0; i < numberedPairs.size(); i++)
             pairToInt.put(numberedPairs.get(i), i);
-        // System.out.println(pairToInt);
 
         // define the constraints
         int[] allPplusArr = new int[allPplus.size()];
